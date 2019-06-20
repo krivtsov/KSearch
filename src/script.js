@@ -1,6 +1,9 @@
 /* eslint-disable no-undef */
 const searchForm = document.querySelector('#search-form');
 const movie = document.querySelector('#movies');
+const baseUrl = 'https://image.tmdb.org/t/p/';
+const fileSize = 'w400';
+const noPosterPath = '../images/no_poster.jpg';
 
 const apiSearch = (event) => {
   event.preventDefault();
@@ -19,9 +22,9 @@ const apiSearch = (event) => {
       const inner = output.results.reduce((acc, item) => {
         const yearItem = item.first_air_date || item.release_date;
         const nameItem = item.name || item.title;
-        const pathImg = item.poster_path;
-        const urlPoster = `https://image.tmdb.org/t/p/w500${pathImg}`;
-        return `${acc}<div class="col-5"> <img src="${urlPoster}" alt="${nameItem}"> <h5>${nameItem}</h5> (${yearItem})</div>`;
+        const filePath = item.poster_path;
+        const posterPath = filePath ? `${baseUrl}${fileSize}${filePath}` : noPosterPath;
+        return `${acc}<div class="col-5"> <img src="${posterPath}" alt="${nameItem}"> <h5>${nameItem}</h5> (${yearItem})</div>`;
       }, '');
 
       movie.innerHTML = inner || 'No matches were found for your request';
