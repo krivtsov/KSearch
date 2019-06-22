@@ -2,7 +2,8 @@
 /* eslint-disable no-undef */
 const searchForm = document.querySelector('#search-form');
 const movie = document.querySelector('#movies');
-const baseUrl = 'https://image.tmdb.org/t/p';
+const baseUrlApi = 'https://api.themoviedb.org/3';
+const baseUrlPoster = 'https://image.tmdb.org/t/p';
 const fileSize = '/w400';
 const noPosterPath = '../images/no_poster.jpg';
 const apiKey = 'ee4599f287ed4985125bc1242ba4c4fc';
@@ -14,17 +15,35 @@ const getJson = (value) => {
   return value.json();
 };
 
+const fetchGetVideoTrailers = (url, querySelector, lang) => {
+  fetch(url, querySelector)
+    .then(getJson)
+    .then((output) => {
+      const videoFrame = output.results.map(item => `<iframe width="560" height="315" src="https://www.youtube.com/embed/${item.key}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe> `).join('');
+      const result = (videoFrame.length === 0) ? `<h4 class="col-12 text-info">no trailers in the ${lang} language</h4>` : videoFrame;
+      querySelector.innerHTML = result;
+    })
+    .catch((err) => {
+      querySelector.innerHTML = `<h4 class="col-12 text-center text-danger">No Videos  Ups ....${err}</h4>`;
+    });
+};
+
+const getVideoTrailers = (type, id, lang) => {
+  const youtube = movies.querySelector(`.youtube_${lang}`);
+  const url = `${baseUrlApi}/${type}/${id}/videos?api_key=${apiKey}&language=${lang}`;
+  fetchGetVideoTrailers(url, youtube, lang);
+};
+
 const showFullInfo = (event) => {
   const imgPoster = event.path[0];
   const movieId = imgPoster.dataset.id;
+  const typeMedia = imgPoster.dataset.type;
   // TODO: change let for const, delete if else
   let url = '';
-  if (imgPoster.dataset.type === 'movie') {
-    url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US`;
-  } else if (imgPoster.dataset.type === 'tv') {
-    url = `https://api.themoviedb.org/3/tv/${movieId}?api_key=${apiKey}&language=en-US`;
+  if (typeMedia) {
+    url = `${baseUrlApi}/${typeMedia}/${movieId}?api_key=${apiKey}&language=en-US`;
   } else {
-    movie.innerHTML = `<h2 class="col-12 text-center text-danger">!!!!Not Wait${err}</h2>`;
+    movie.innerHTML = `<h4 class="col-12 text-center text-danger">!!!!Not Wait${err}</h4>`;
   }
 
   fetch(url)
@@ -33,7 +52,7 @@ const showFullInfo = (event) => {
       const homePage = output.homepage ? `<p class="text-center"> <a href="${output.homepage}" target="_blank">Home page</a> </p>` : '';
       const imdbPage = output.imdb_id ? `<p class="text-center"> <a href="https://imdb.com/title/${output.imdb_id}" target="_blank"> Page in IMDB.com </a> </p>` : '';
       const filePath = output.poster_path;
-      const posterPath = filePath ? `${baseUrl}${fileSize}${filePath}` : noPosterPath;
+      const posterPath = filePath ? `${baseUrlPoster}${fileSize}${filePath}` : noPosterPath;
       const genres = output.genres.map(genre => ` ${genre.name}`);
       movie.innerHTML = `
         <h4 class="col-12 text-center">${output.title || output.name}</h4>
@@ -51,11 +70,17 @@ const showFullInfo = (event) => {
             <p> ${`${output.tagline || ''}`}</p>
             <p> ${output.overview}</p>
             <p> Gengres : ${genres}</p>
+            <br>
+            <div class="youtube_en"></div>
+            <div class="youtube_ru"></div>
           </div>
       `;
+
+      getVideoTrailers(typeMedia, movieId, 'en');
+      getVideoTrailers(typeMedia, movieId, 'ru');
     })
     .catch((err) => {
-      movie.innerHTML = `<h2 class="col-12 text-center text-danger">Ups ....${err}</h2>`;
+      movie.innerHTML = `<h4 class="col-12 text-center text-danger">Ups ....${err}</h4>`;
     });
 };
 
@@ -68,7 +93,7 @@ const addEventMedia = () => {
   });
 };
 
-const urlTrends = `https://api.themoviedb.org/3/trending/all/week?api_key=${apiKey}`;
+const urlTrends = `${baseUrlApi}/trending/all/week?api_key=${apiKey}`;
 
 document.addEventListener('DOMContentLoaded', () => {
   fetch(urlTrends)
@@ -80,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const mediaType = item.title ? 'movie' : 'tv';
         const filePath = item.poster_path;
         const dataInfo = `data-id="${item.id}" data-type="${mediaType}"`;
-        const posterPath = filePath ? `${baseUrl}${fileSize}${filePath}` : noPosterPath;
+        const posterPath = filePath ? `${baseUrlPoster}${fileSize}${filePath}` : noPosterPath;
         return `${acc}<div class="col-6 col-md-6 col-xl-3 item"> <img src="${posterPath}" class="poster" alt="${nameItem}" ${dataInfo}> <h5>${nameItem}</h5> (${yearItem})</div>`;
       }, '<h2 class="col-12 text-center">Popular for the week</h2>');
 
@@ -99,7 +124,7 @@ const apiSearch = (event) => {
     movie.innerHTML = '<h2 class="col-12 text-center text-warning">Enter a query to search for a movie</h2>';
     return;
   }
-  const url = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=en-US&query=---${searchText}`;
+  const url = `${baseUrlApi}/search/multi?api_key=${apiKey}&language=en-US&query=---${searchText}`;
 
   movie.innerHTML = '<div class="spinner"></div>';
 
@@ -111,7 +136,7 @@ const apiSearch = (event) => {
         const nameItem = item.name || item.title;
         const filePath = item.poster_path;
         const dataInfo = item.media_type !== 'person' ? `data-id="${item.id}" data-type="${item.media_type}"` : '';
-        const posterPath = filePath ? `${baseUrl}${fileSize}${filePath}` : noPosterPath;
+        const posterPath = filePath ? `${baseUrlPoster}${fileSize}${filePath}` : noPosterPath;
         return `${acc}<div class="col-6 col-md-6 col-xl-3 item"> <img src="${posterPath}" class="poster" alt="${nameItem}" ${dataInfo}> <h5>${nameItem}</h5> (${yearItem})</div>`;
       }, '');
 
