@@ -19,7 +19,7 @@ const fetchGetVideoTrailers = (url, querySelector, lang) => {
   fetch(url, querySelector)
     .then(getJson)
     .then((output) => {
-      const videoFrame = output.results.map(item => `<iframe width="560" height="315" src="https://www.youtube.com/embed/${item.key}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe> `).join('');
+      const videoFrame = output.results.map(item => `<iframe width="560" height="315" src="https://www.youtube.com/embed/${item.key}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe> `).slice(-2).join('');
       const result = (videoFrame.length === 0) ? `<h4 class="col-12 text-info">no trailers in the ${lang} language</h4>` : videoFrame;
       querySelector.innerHTML = result;
     })
